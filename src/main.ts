@@ -5,36 +5,38 @@ const ctx = github.context
 
 async function run(): Promise<void> {
   try {
-    // const token = core.getInput('GITHUB_TOKEN', {required: true})
-    // const author = ctx.payload
-    core.debug(JSON.stringify(ctx.payload.pull_request))
+    const token = core.getInput('GITHUB_TOKEN', {required: true})
+    const author = ctx.payload.pull_request?.user.login
 
-    // const octokit = github.getOctokit(token)
+    if (!author) {
+      throw new Error('Fail to get PR author.')
+    }
 
-    // const {owner, repo} = ctx.repo
-    // const pull_number = ctx.payload.pull_request?.number
+    const octokit = github.getOctokit(token)
 
-    // if (!pull_number) {
-    //   core.debug('There is no pull_number')
-    //   return
-    // }
-    // const {data: pullRequest} = await octokit.pulls.get({
-    //   owner,
-    //   repo,
-    //   pull_number
-    // })
+    const {owner, repo} = ctx.repo
+    const pull_number = ctx.payload.pull_request?.number
 
-    // if (pullRequest.assignee) {
-    //   core.debug('This PR already has been assigned')
-    //   return
-    // }
+    if (!pull_number) {
+      throw new Error('Fail to get pull_number')
+    }
+    const {data: pullRequest} = await octokit.pulls.get({
+      owner,
+      repo,
+      pull_number
+    })
 
-    // await octokit.issues.addAssignees({
-    //   owner,
-    //   repo,
-    //   issue_number: pull_number,
-    //   assignees:
-    // })
+    if (pullRequest.assignee) {
+      core.warning('This PR has already been assigned')
+      return
+    }
+
+    await octokit.issues.addAssignees({
+      owner,
+      repo,
+      issue_number: pull_number,
+      assignees: author
+    })
   } catch (error) {
     core.setFailed(error.message)
   }

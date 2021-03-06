@@ -40,33 +40,35 @@ const core = __importStar(__nccwpck_require__(186));
 const github = __importStar(__nccwpck_require__(438));
 const ctx = github.context;
 function run() {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // const token = core.getInput('GITHUB_TOKEN', {required: true})
-            // const author = ctx.payload
-            core.debug(JSON.stringify(ctx.payload.pull_request));
-            // const octokit = github.getOctokit(token)
-            // const {owner, repo} = ctx.repo
-            // const pull_number = ctx.payload.pull_request?.number
-            // if (!pull_number) {
-            //   core.debug('There is no pull_number')
-            //   return
-            // }
-            // const {data: pullRequest} = await octokit.pulls.get({
-            //   owner,
-            //   repo,
-            //   pull_number
-            // })
-            // if (pullRequest.assignee) {
-            //   core.debug('This PR already has been assigned')
-            //   return
-            // }
-            // await octokit.issues.addAssignees({
-            //   owner,
-            //   repo,
-            //   issue_number: pull_number,
-            //   assignees:
-            // })
+            const token = core.getInput('GITHUB_TOKEN', { required: true });
+            const author = (_a = ctx.payload.pull_request) === null || _a === void 0 ? void 0 : _a.user.login;
+            if (!author) {
+                throw new Error('Fail to get PR author.');
+            }
+            const octokit = github.getOctokit(token);
+            const { owner, repo } = ctx.repo;
+            const pull_number = (_b = ctx.payload.pull_request) === null || _b === void 0 ? void 0 : _b.number;
+            if (!pull_number) {
+                throw new Error('Fail to get pull_number');
+            }
+            const { data: pullRequest } = yield octokit.pulls.get({
+                owner,
+                repo,
+                pull_number
+            });
+            if (pullRequest.assignee) {
+                core.warning('This PR has already been assigned');
+                return;
+            }
+            yield octokit.issues.addAssignees({
+                owner,
+                repo,
+                issue_number: pull_number,
+                assignees: author
+            });
         }
         catch (error) {
             core.setFailed(error.message);
