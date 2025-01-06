@@ -6,11 +6,19 @@ const ctx = github.context
 async function run(): Promise<void> {
   try {
     const token = core.getInput('GITHUB_TOKEN', {required: true})
-    const author = ctx.payload.pull_request?.user.login
 
-    if (!author) {
-      throw new Error('Fail to get PR author.')
+    const pull_request = ctx.payload.pull_request
+    if (!pull_request) {
+      throw new Error('This action can only be run on pull_request')
     }
+
+    const ref = pull_request.head.ref
+    if (ref.startsWith('dependabot') || ref.startsWith('renovate')) {
+        core.info('This PR is created by bot, skip assigning')
+        return
+    }
+
+    const author = pull_request.user.login
 
     const octokit = github.getOctokit(token)
 
