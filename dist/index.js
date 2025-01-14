@@ -9,7 +9,11 @@ require('./sourcemap-register.js');module.exports =
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -40,17 +44,23 @@ const core = __importStar(__nccwpck_require__(186));
 const github = __importStar(__nccwpck_require__(438));
 const ctx = github.context;
 function run() {
-    var _a, _b;
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const token = core.getInput('GITHUB_TOKEN', { required: true });
-            const author = (_a = ctx.payload.pull_request) === null || _a === void 0 ? void 0 : _a.user.login;
-            if (!author) {
-                throw new Error('Fail to get PR author.');
+            const pull_request = ctx.payload.pull_request;
+            if (!pull_request) {
+                throw new Error('This action can only be run on pull_request');
             }
+            const ref = pull_request.head.ref;
+            if (ref.startsWith('dependabot') || ref.startsWith('renovate')) {
+                core.info('This PR is created by bot, skip assigning');
+                return;
+            }
+            const author = pull_request.user.login;
             const octokit = github.getOctokit(token);
             const { owner, repo } = ctx.repo;
-            const pull_number = (_b = ctx.payload.pull_request) === null || _b === void 0 ? void 0 : _b.number;
+            const pull_number = (_a = ctx.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number;
             if (!pull_number) {
                 throw new Error('Fail to get pull_number');
             }
@@ -71,7 +81,9 @@ function run() {
             });
         }
         catch (error) {
-            core.setFailed(error.message);
+            if (error instanceof Error) {
+                core.setFailed(error.message);
+            }
         }
     });
 }
