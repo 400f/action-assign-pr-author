@@ -15,7 +15,7 @@ async function run(): Promise<void> {
     const ref = pull_request.head.ref
     if (ref.startsWith('dependabot') || ref.startsWith('renovate')) {
         core.info('This PR is created by bot, skip assigning')
-        return
+        return await Promise.resolve()
     }
 
     const author = pull_request.user.login
@@ -36,7 +36,7 @@ async function run(): Promise<void> {
 
     if (pullRequest.assignee) {
       core.warning('This PR has already been assigned')
-      return
+      return await Promise.resolve()
     }
 
     await octokit.issues.addAssignees({
