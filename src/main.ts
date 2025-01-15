@@ -14,8 +14,8 @@ async function run(): Promise<void> {
 
     const ref = pull_request.head.ref
     if (ref.startsWith('dependabot') || ref.startsWith('renovate')) {
-        core.info('This PR is created by bot, skip assigning')
-        return
+      core.info('This PR is created by bot, skip assigning')
+      return
     }
 
     const author = pull_request.user.login
@@ -46,7 +46,9 @@ async function run(): Promise<void> {
       assignees: author
     })
   } catch (error) {
-    core.setFailed(error.message)
+    if (error instanceof Error) {
+      core.setFailed(error.message)
+    }
   }
 }
 
