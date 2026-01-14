@@ -12,13 +12,15 @@ async function run(): Promise<void> {
       throw new Error('This action can only be run on pull_request')
     }
 
-    const ref = pull_request.head.ref
+    const head = pull_request.head as {ref: string}
+    const ref = head.ref
     if (ref.startsWith('dependabot') || ref.startsWith('renovate')) {
       core.info('This PR is created by bot, skip assigning')
       return
     }
 
-    const author = pull_request.user.login
+    const user = pull_request.user as {login: string}
+    const author = user.login
 
     const octokit = github.getOctokit(token)
 
@@ -28,7 +30,7 @@ async function run(): Promise<void> {
     if (!pull_number) {
       throw new Error('Fail to get pull_number')
     }
-    const {data: pullRequest} = await octokit.pulls.get({
+    const {data: pullRequest} = await octokit.rest.pulls.get({
       owner,
       repo,
       pull_number
@@ -39,11 +41,11 @@ async function run(): Promise<void> {
       return
     }
 
-    await octokit.issues.addAssignees({
+    await octokit.rest.issues.addAssignees({
       owner,
       repo,
       issue_number: pull_number,
-      assignees: author
+      assignees: [author]
     })
   } catch (error) {
     if (error instanceof Error) {
@@ -52,4 +54,4 @@ async function run(): Promise<void> {
   }
 }
 
-run()
+void run()
