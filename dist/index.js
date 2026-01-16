@@ -50,14 +50,13 @@ async function run() {
         if (!pull_request) {
             throw new Error('This action can only be run on pull_request');
         }
-        const head = pull_request.head;
-        const ref = head.ref;
+        const pr = pull_request;
+        const ref = pr.head.ref;
         if (ref.startsWith('dependabot') || ref.startsWith('renovate')) {
             core.info('This PR is created by bot, skip assigning');
             return;
         }
-        const user = pull_request.user;
-        const author = user.login;
+        const author = pr.user.login;
         const octokit = github.getOctokit(token);
         const { owner, repo } = ctx.repo;
         const pull_number = ctx.payload.pull_request?.number;

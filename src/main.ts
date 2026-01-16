@@ -1,6 +1,12 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 
+interface PullRequestPayload {
+  head: {ref: string}
+  user: {login: string}
+  number: number
+}
+
 const ctx = github.context
 
 async function run(): Promise<void> {
@@ -12,15 +18,14 @@ async function run(): Promise<void> {
       throw new Error('This action can only be run on pull_request')
     }
 
-    const head = pull_request.head as {ref: string}
-    const ref = head.ref
+    const pr = pull_request as PullRequestPayload
+    const ref = pr.head.ref
     if (ref.startsWith('dependabot') || ref.startsWith('renovate')) {
       core.info('This PR is created by bot, skip assigning')
       return
     }
 
-    const user = pull_request.user as {login: string}
-    const author = user.login
+    const author = pr.user.login
 
     const octokit = github.getOctokit(token)
 

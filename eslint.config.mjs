@@ -30,6 +30,7 @@ export default tseslint.config(
       '@typescript-eslint/require-array-sort-compare': 'error',
       '@typescript-eslint/restrict-plus-operands': 'error',
       '@typescript-eslint/unbound-method': 'error',
+      'semi': ['error', 'never'],
     },
   },
   {
