@@ -1,6 +1,12 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 
+interface PullRequestPayload {
+  head: {ref: string}
+  user: {login: string}
+  number: number
+}
+
 const ctx = github.context
 
 async function run(): Promise<void> {
@@ -12,13 +18,14 @@ async function run(): Promise<void> {
       throw new Error('This action can only be run on pull_request')
     }
 
-    const ref = pull_request.head.ref
+    const pr = pull_request as PullRequestPayload
+    const ref = pr.head.ref
     if (ref.startsWith('dependabot') || ref.startsWith('renovate')) {
       core.info('This PR is created by bot, skip assigning')
       return
     }
 
-    const author = pull_request.user.login
+    const author = pr.user.login
 
     const octokit = github.getOctokit(token)
 
@@ -28,7 +35,7 @@ async function run(): Promise<void> {
     if (!pull_number) {
       throw new Error('Fail to get pull_number')
     }
-    const {data: pullRequest} = await octokit.pulls.get({
+    const {data: pullRequest} = await octokit.rest.pulls.get({
       owner,
       repo,
       pull_number
@@ -39,11 +46,11 @@ async function run(): Promise<void> {
       return
     }
 
-    await octokit.issues.addAssignees({
+    await octokit.rest.issues.addAssignees({
       owner,
       repo,
       issue_number: pull_number,
-      assignees: author
+      assignees: [author]
     })
   } catch (error) {
     if (error instanceof Error) {
@@ -52,4 +59,4 @@ async function run(): Promise<void> {
   }
 }
 
-run()
+void run()
