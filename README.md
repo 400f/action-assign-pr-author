@@ -24,7 +24,17 @@ jobs:
 ## Development
 
 ```sh
-$ yarn build && yarn package
+$ npm run build && npm run package
 ```
 
 このリポジトリでプルリク作ったらワークフロー走るからそこでテストする。
+
+### Dependency Updates
+
+The action runs the committed `dist/`, and `.github/workflows/check.yml` fails when `dist/` does not match a fresh build.
+Renovate only updates `package.json` and `package-lock.json`, so its pull requests that change the bundle fail this check and are not automerged.
+Rebuild on the Renovate branch and push, then merge manually:
+
+```sh
+npm ci && npm run build && npm run package
+```
